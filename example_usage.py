@@ -1,55 +1,73 @@
-from word_embedder import WordEmbedder
+from word_embedder import TextEmbedder
 from afn import ApproximateFurthestNeighbors, DistanceMetric
 from visualizer import AFNVisualizer
 
-def test_word_embeddings():
-    # Sample word list
-    words = [
-        "happy", "sad", "joy", "sorrow", "laugh", "cry",
-        "good", "bad", "excellent", "terrible",
-        "hot", "cold", "warm", "cool",
-        "big", "small", "huge", "tiny",
-        "fast", "slow", "quick", "sluggish",
-        "bright", "dark", "light", "dim",
-        "love", "hate", "like", "dislike"
-    ]
+def test_embeddings(data_type: str = "sentences"):
+    """
+    Test the AFN system with different types of text data.
     
-    # Initialize embedder and generate embeddings
-    print("Generating word embeddings...")
-    embedder = WordEmbedder()
-    embeddings, idx_to_word = embedder.embed_words(words)
+    Args:
+        data_type: Type of data to use ("words", "sentences", or "mixed")
+    """
+    # Initialize embedder and get example data
+    print(f"Initializing embedder and generating {data_type} examples...")
+    embedder = TextEmbedder()
+    texts = embedder.generate_example_data(data_type)
+    
+    # Generate embeddings
+    print("Generating embeddings...")
+    embeddings, idx_to_text = embedder.embed_texts(texts)
     
     # Initialize AFN
     print("Initializing AFN...")
     afn = ApproximateFurthestNeighbors(
         embeddings,
-        metric=DistanceMetric.COSINE,  # Cosine similarity is often better for word embeddings
+        metric=DistanceMetric.COSINE,
         num_pivots=6,
         points_per_pivot=5
     )
     
     # Create visualizer
-    visualizer = AFNVisualizer(afn, idx_to_word)
+    visualizer = AFNVisualizer(afn, idx_to_text)
     
-    # Generate visualizations
+    # Generate visualization
     print("Generating 2D visualization...")
     visualizer.plot_pivot_structure_2d(show_labels=True)
     
-    # Find some example furthest pairs
-    print("\nFinding furthest word pairs...")
+    # Find furthest pairs
+    print("\nFinding furthest pairs...")
     pairs = afn.find_furthest_pairs(num_pairs=5)
-    print("\nFurthest word pairs:")
+    print("\nFurthest text pairs:")
     for idx1, idx2, dist in pairs:
-        print(f"'{idx_to_word[idx1]}' <-> '{idx_to_word[idx2]}': distance = {dist:.3f}")
+        print(f"\nPair with distance = {dist:.3f}")
+        print(f"Text 1: \"{idx_to_text[idx1]}\"")
+        print(f"Text 2: \"{idx_to_text[idx2]}\"")
     
-    # Find furthest words from a query
-    query_word = "happy"
-    print(f"\nFinding words furthest from '{query_word}'...")
-    query_embedding = embedder.embed_words([query_word])[0][0]
+    # Example query
+    if data_type == "words":
+        query_text = "happy"
+    else:
+        query_text = "I absolutely love this beautiful day!"
+    
+    print(f"\nFinding texts furthest from: \"{query_text}\"")
+    query_embedding = embedder.embed_texts([query_text])[0][0]
     indices, distances = afn.find_furthest_neighbors(query_embedding, k=5)
-    print(f"\nWords furthest from '{query_word}':")
+    
+    print("\nFurthest texts:")
     for idx, dist in zip(indices, distances):
-        print(f"'{idx_to_word[idx]}': distance = {dist:.3f}")
+        print(f"\nDistance = {dist:.3f}")
+        print(f"Text: \"{idx_to_text[idx]}\"")
+
+def main():
+    # Test with different types of data
+    print("Testing with words...")
+    test_embeddings("words")
+    
+    print("\nTesting with sentences...")
+    test_embeddings("sentences")
+    
+    print("\nTesting with mixed data...")
+    test_embeddings("mixed")
 
 if __name__ == "__main__":
-    test_word_embeddings()
+    main()
