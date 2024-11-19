@@ -23,8 +23,8 @@ def test_embeddings(data_type: str = "sentences"):
     afn = ApproximateFurthestNeighbors(
         embeddings,
         metric=DistanceMetric.COSINE,
-        num_pivots=2,
-        points_per_pivot=15
+        num_pivots=3,
+        points_per_pivot=20
     )
     
     # Create visualizer
